@@ -31,7 +31,7 @@ client = TelegramClient(
     API_ID,
     API_HASH,
     connection_retries=None,  # 无限重试
-    retry_delay=1  # 1���
+    retry_delay=1  
 )
 
 # Debug mode
@@ -588,7 +588,7 @@ async def handle_new_message(event):
                                     
                                 parse_mode = regex_format.parse_mode
                                 # 打印调试信息
-                                print(f"��配到正则表达式: {pattern}")
+                                print(f"匹配到正则表达式: {pattern}")
                                 print(f"处理后的内容: {content}")
                                 print(f"使用格式: {parse_mode}")
                             except re.error as e:
@@ -1258,7 +1258,7 @@ async def preview_setting(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"✅ 已{action}链接预览设置\n"
             f"📤 来源: {source_title} ({chat_id})\n"
-            f"📝 ��览: {'开启' if enable_preview else '关闭'}"
+            f"📝 预览: {'开启' if enable_preview else '关闭'}"
         )
         
     except Exception as e:
