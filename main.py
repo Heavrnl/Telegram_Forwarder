@@ -7,7 +7,6 @@ from models import Session, Source, Keyword, init_db, MessageFormat, RegexFormat
 from math import ceil
 import tempfile
 from telegram.constants import ParseMode
-from FastTelethon import download_file, upload_file
 import time
 from collections import defaultdict, OrderedDict
 from telethon.errors import ServerError
