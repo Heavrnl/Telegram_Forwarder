@@ -74,7 +74,7 @@ docker-compose up -d
 - `/list` - 查看当前配置信息
 - `/export` - 导出关键字列表
 - `/switch <来源> <格式>` - 设置消息格式(html/markdown)
-- `/regex <来源> <正则> [格式]` - 设置正则表达式
+- `/regex <来源> <正则> [格式]` - 设置正则表达式去除不需要的字符
 - `/regex_list <来源>` - 查看正则规则
 - `/regex_remove <来源>` - 移除正则规则
 - `/preview <来源> <on/off>` - 设置链接预览
