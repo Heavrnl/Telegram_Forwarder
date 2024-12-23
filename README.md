@@ -123,5 +123,5 @@ docker-compose up -d
 
 ## 许可证
 
-MIT License
+[MIT License](https://github.com/Heavrnl/Telegram_Forwarder/blob/main/LICENSE)
 
