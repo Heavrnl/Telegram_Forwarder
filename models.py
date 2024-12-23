@@ -20,22 +20,41 @@ class Source(Base):
     __tablename__ = 'sources'
     
     id = Column(Integer, primary_key=True)
-    chat_id = Column(String, nullable=False)
+    chat_id = Column(String, nullable=False)  # 来源ID
+    target_chat_id = Column(String, nullable=False)  # 目标ID
     chat_type = Column(String, nullable=False)  # channel, group, private
+    filter_mode = Column(String, nullable=False)  # whitelist or blacklist
+    parse_mode = Column(String, default='markdown')  # markdown or html
 
 class Keyword(Base):
     __tablename__ = 'keywords'
     
     id = Column(Integer, primary_key=True)
+    target_chat_id = Column(String, nullable=False)  # 关联的目标ID
     word = Column(String, nullable=False)
     is_whitelist = Column(Boolean, default=True)  # True for whitelist, False for blacklist
 
-class Config(Base):
-    __tablename__ = 'config'
+class MessageFormat(Base):
+    __tablename__ = 'message_formats'
     
     id = Column(Integer, primary_key=True)
-    target_chat_id = Column(String, nullable=False)
-    filter_mode = Column(String, nullable=False)  # whitelist or blacklist
+    chat_id = Column(String, nullable=False, unique=True)  # 来源聊天ID
+    parse_mode = Column(String, nullable=False, default='markdown')  # markdown or html
+
+class RegexFormat(Base):
+    __tablename__ = 'regex_formats'
+    
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(String, nullable=False, unique=True)  # 来源聊天ID,添加unique约束
+    pattern = Column(String, nullable=False)  # 正则表达式模式
+    parse_mode = Column(String, nullable=False, default='markdown')  # markdown or html
+
+class PreviewSetting(Base):
+    __tablename__ = 'preview_settings'
+    
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(String, nullable=False, unique=True)  # 来源聊天ID
+    enable_preview = Column(Boolean, default=False)  # 是否启用预览
 
 def init_db():
     Base.metadata.create_all(engine) 

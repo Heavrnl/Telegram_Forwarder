@@ -1,13 +1,19 @@
-version: '3.8'
+version: '3'
 
 services:
   telegram-forwarder:
     build: .
+    restart: unless-stopped
     volumes:
-      - ./.env:/app/.env
       - ./data:/app/data
       - ./sessions:/app/sessions
       - ./temp:/app/temp
+    environment:
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - USER_ID=${USER_ID}
+      - PHONE_NUMBER=${PHONE_NUMBER}
+      - DATABASE_URL=sqlite:///data/telegram_forwarder.db
     stdin_open: true  # 启用标准输入
     tty: true        # 分配伪终端
-    restart: unless-stopped 
