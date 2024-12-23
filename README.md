@@ -100,7 +100,7 @@ docker-compose up -d
 
 6. 如果发现转发的消息格式有问题（比如有多余的符号），可以使用正则表达式处理：
    ```bash
-   /regex https://t.me/tgnews \*\* markdown
+   /regex https://t.me/tgnews \*\*
    ```
    这会删除消息中的所有 `**` 符号
 
