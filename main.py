@@ -139,7 +139,7 @@ async def binding(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_type = 'unknown'
                     bound_sources.append(chat_id)
             
-            # 检查是否已经存在该绑定
+            # 检查是否已经绑定
             existing = session.query(Source).filter(
                 Source.chat_id == chat_id,
                 Source.target_chat_id == target_chat_id
@@ -209,7 +209,7 @@ async def unbinding(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Source.chat_id == current_chat_id
         ).delete()
         
-        # 如果是目标窗口，同时删除其关键字
+        # 如果是目窗口，同时删除其关键字
         session.query(Keyword).filter(
             Keyword.target_chat_id == current_chat_id
         ).delete()
@@ -502,7 +502,7 @@ async def handle_new_message(event):
     # 处理普通消息的转发逻辑...
     session = Session()
     try:
-        # 获取聊天信息
+        # 获取聊天信���
         chat = await event.get_chat()
         
         # 取消息来源和查询
@@ -677,7 +677,7 @@ async def setup_and_run():
         # Start Telethon client with authentication
         await start_client()
         
-        # 改消息处理器，同时处理频道息
+        # 处理消息处理器，同时处理频道消息
         client.add_event_handler(handle_new_message, events.NewMessage())
         client.add_event_handler(handle_new_message, events.MessageEdited())  # 可选：处理编辑的消息
         
@@ -689,7 +689,7 @@ async def setup_and_run():
         commands = [
             ("start", "显示帮助信息"),
             ("binding", "绑定来源聊天窗口"),
-            ("unbinding", "解除所有绑定"),
+            ("unbinding", "解所有绑定"),
             ("add", "添加过滤关键字"),
             ("remove", "删除过滤关键字"),
             ("list", "查看当前配置信息"),
@@ -846,41 +846,47 @@ async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         if query.data.startswith("list_keywords_"):
             page = int(query.data.split("_")[-1])
-            keywords = session.query(Keyword).all()
+            current_chat_id = str(query.message.chat_id)
+            
+            # 获取当前窗口的关键字
+            keywords = session.query(Keyword).filter(
+                Keyword.target_chat_id == current_chat_id
+            ).all()
+            
             total_pages = ceil(len(keywords) / 50)
             
             if not keywords:
-                await query.edit_message_text("无关键词")
+                await query.edit_message_text("暂无关键字")
                 return
             
             start_idx = page * 50
             end_idx = start_idx + 50
             current_keywords = keywords[start_idx:end_idx]
             
-            # 只在第一页显示配置信息
+            # 获取来源信息
+            sources = session.query(Source).filter(
+                Source.target_chat_id == current_chat_id
+            ).all()
+            
+            # 构建消息文本
             if page == 0:
-                # 取配置信
-                config = session.query(Config).first()
-                sources = session.query(Source).all()
+                # 第一页显示完整信息
                 source_info = []
                 for source in sources:
                     try:
                         chat = await client.get_entity(int(source.chat_id))
-                        source_info.append(f"- {chat.title} ({source.chat_id})")
+                        source_info.append(
+                            f"- {chat.title} ({source.chat_id}) "
+                            f"[{'白名单' if source.filter_mode == 'whitelist' else '黑名单'}]"
+                        )
                     except:
-                        source_info.append(f"- {source.chat_id}")
-                
-                # 获取目标窗口信息
-                try:
-                    target_chat = await client.get_entity(int(config.target_chat_id))
-                    target_info = f"{target_chat.title} ({config.target_chat_id})"
-                except:
-                    target_info = config.target_chat_id
+                        source_info.append(
+                            f"- {source.chat_id} "
+                            f"[{'白名单' if source.filter_mode == 'whitelist' else '黑名单'}]"
+                        )
                 
                 text_lines = [
-                    "📋 当前置息：",
-                    f"⚙️ 过滤模式: {'白名单' if config.filter_mode == 'whitelist' else '黑名单'}",
-                    f"📥 目标窗口: {target_info}",
+                    "📋 当前配置信息：",
                     "\n📤 来源窗口:",
                     *source_info,
                     "\n📝 关键词列表："
@@ -892,7 +898,7 @@ async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             text_lines.extend([f"{i+1+start_idx}. {kw.word}" for i, kw in enumerate(current_keywords)])
             text_lines.append(f"\n页码: {page + 1}/{total_pages}")
             
-            # 建分页钮
+            # 构建分页按钮
             keyboard = []
             if page > 0:
                 keyboard.append(InlineKeyboardButton("⬅️ 上一页", callback_data=f"list_keywords_{page-1}"))
@@ -906,11 +912,14 @@ async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 reply_markup=reply_markup
             )
     
+    except Exception as e:
+        print(f"处理分页时出错: {str(e)}")
+        await query.edit_message_text(f"❌ 处理分页时出错: {str(e)}")
     finally:
         session.close()
 
 async def export_keywords(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """导出当前窗口的所有关键字"""
+    """导出当前窗口的所有关键字到文本文件"""
     if update.effective_user.id != USER_ID:
         return
     
@@ -936,14 +945,28 @@ async def export_keywords(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ 当前窗口没有任何关键字")
             return
         
-        # 将关键字用空格连接
-        keywords_text = " ".join(kw.word for kw in keywords)
+        # 创建临时文件
+        temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_file = os.path.join(temp_dir, f'keywords_{current_chat_id}.txt')
         
-        await update.message.reply_text(
-            f"📤 当前口的关键字列表：\n\n"
-            f"{keywords_text}"
+        # 将关键字写入文件，用空格分隔
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            keywords_text = " ".join(kw.word for kw in keywords)
+            f.write(keywords_text)
+        
+        # 发送文件
+        await update.message.reply_document(
+            document=open(temp_file, 'rb'),
+            filename=f'keywords_{current_chat_id}.txt',
+            caption="✅ 关键字导出成功"
         )
-    
+        
+        # 删除临时文件
+        os.remove(temp_file)
+        
+    except Exception as e:
+        await update.message.reply_text(f"❌ 导出失败: {str(e)}")
     finally:
         session.close()
 
@@ -1105,7 +1128,7 @@ async def regex_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("请提供来源聊天窗口\n例如: /regex_list https://t.me/channel_name")
+        await update.message.reply_text("请提供来源聊天窗口\n���如: /regex_list https://t.me/channel_name")
         return
     
     source = context.args[0]
@@ -1281,18 +1304,20 @@ def main():
     # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("binding", binding))
-    application.add_handler(CommandHandler("unbinding", unbinding))  # 添加解绑命令
+    application.add_handler(CommandHandler("unbinding", unbinding))
     application.add_handler(CommandHandler("add", add_keywords))
     application.add_handler(CommandHandler("remove", remove_keywords))
-    application.add_handler(CallbackQueryHandler(mode_callback))
     application.add_handler(CommandHandler("list", list_info))
-    application.add_handler(CallbackQueryHandler(handle_list_callback))
     application.add_handler(CommandHandler("export", export_keywords))
     application.add_handler(CommandHandler("switch", switch_format))
     application.add_handler(CommandHandler("regex", regex_format))
     application.add_handler(CommandHandler("regex_list", regex_list))
     application.add_handler(CommandHandler("regex_remove", regex_remove))
     application.add_handler(CommandHandler("preview", preview_setting))
+    
+    # 添加回调查询处理器
+    application.add_handler(CallbackQueryHandler(mode_callback, pattern="^mode_"))
+    application.add_handler(CallbackQueryHandler(handle_list_callback, pattern="^list_keywords_"))
     
     # 运行应用
     try:
