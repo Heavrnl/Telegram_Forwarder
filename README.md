@@ -32,7 +32,7 @@
 
 1. 克隆项目：
 ```bash
-git clone https://github.com/yourusername/telegram-forwarder.git
+git clone https://github.com/Heavrnl/Telegram_Forwarder.git
 cd telegram-forwarder
 ```
 
