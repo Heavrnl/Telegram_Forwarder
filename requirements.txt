@@ -1,0 +1,4 @@
+python-telegram-bot==20.8
+telethon==1.34.0
+python-dotenv==1.0.0
+SQLAlchemy==2.0.27
