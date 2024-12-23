@@ -6,7 +6,7 @@
 
 - 🔄 **多源转发**：支持从多个来源转发到指定目标
 - 📝 **消息格式**：支持 Markdown 和 HTML 格式
-- ⚡ **实时转发**：消息实时转发，延迟极低
+- ⚡ **实时转发**：消息实时转发
 - 🔍 **关键词过滤**：支持白名单和黑名单模式
 - 📋 **正则替换**：支持使用正则表达式处理消息内容
 - 🔗 **链接预览**：可控制是否显示链接预览
@@ -32,7 +32,7 @@
 
 1. 克隆项目：
 ```bash
-git clone https://github.com/yourusername/telegram-forwarder.git
+git clone https://github.com/Heavrnl/Telegram_Forwarder.git
 cd telegram-forwarder
 ```
 
@@ -74,10 +74,45 @@ docker-compose up -d
 - `/list` - 查看当前配置信息
 - `/export` - 导出关键字列表
 - `/switch <来源> <格式>` - 设置消息格式(html/markdown)
-- `/regex <来源> <正则> [格式]` - 设置正则表达式
+- `/regex <来源> <正则> [格式]` - 设置正则表达式去除不需要的字符
 - `/regex_list <来源>` - 查看正则规则
 - `/regex_remove <来源>` - 移除正则规则
 - `/preview <来源> <on/off>` - 设置链接预览
+
+### 使用实例
+
+假设你想订阅频道 "TG News" (https://t.me/tgnews)，但想过滤掉一些不感兴趣的内容：
+
+1. 创建一个 Telegram 群组（例如："My News Filter"）
+2. 将机器人添加到群组并设置为管理员
+3. 在群组中发送命令：
+   ```bash
+   /binding https://t.me/tgnews
+   ```
+4. 选择过滤模式：
+   - 黑名单：默认转发所有内容，除了包含关键词的消息
+   - 白名单：默认不转发任何内容，除非包含关键词
+
+5. 添加过滤关键词（黑名单模式下，包含这些关键词的消息将被过滤）：
+   ```bash
+   /add 广告 推广 优惠
+   ```
+
+6. 如果发现转发的消息格式有问题（比如有多余的符号），可以使用正则表达式处理：
+   ```bash
+   /regex https://t.me/tgnews \*\*
+   ```
+   这会删除消息中的所有 `**` 符号
+
+7. 控制链接预览：
+   ```bash
+   # 开启预览
+   /preview https://t.me/tgnews on
+   # 关闭预览
+   /preview https://t.me/tgnews off
+   ```
+
+这样，你就能在群组中收到经过过滤和格式化的频道消息了！
 
 ### 注意事项
 
@@ -88,5 +123,5 @@ docker-compose up -d
 
 ## 许可证
 
-MIT License
+[MIT License](https://github.com/Heavrnl/Telegram_Forwarder/blob/main/LICENSE)
 

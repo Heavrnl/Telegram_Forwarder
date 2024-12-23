@@ -1,0 +1,7 @@
+
+.env
+/sessions
+telegram_forwarder.db
+/__pycache__
+/.idea
+.dockerignore
